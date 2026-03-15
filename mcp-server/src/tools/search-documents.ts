@@ -10,12 +10,17 @@ export function createSearchDocumentsHandler(client: DocumentApiClient) {
     try {
       const results = await client.searchDocuments(args.query);
       return {
-        content: [{ type: "text" as const, text: JSON.stringify(results, null, 2) }],
+        content: [
+          { type: "text" as const, text: JSON.stringify(results, null, 2) },
+        ],
       };
     } catch (error) {
       return {
         content: [
-          { type: "text" as const, text: `Error searching documents: ${(error as Error).message}` },
+          {
+            type: "text" as const,
+            text: `Error searching documents: ${(error as Error).message}`,
+          },
         ],
         isError: true,
       };

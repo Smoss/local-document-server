@@ -29,7 +29,26 @@ testpaths = ["tests"]
 dev-dependencies = [
     "pytest>=8.3",
     "pytest-asyncio>=0.25",
+    "ruff>=0.8",
+    "mypy>=1.13",
 ]
+
+[tool.ruff]
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "pgvector.*"
+ignore_missing_imports = true
+follow_untyped_imports = true
 
 [build-system]
 requires = ["hatchling"]

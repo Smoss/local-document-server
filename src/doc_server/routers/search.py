@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -11,7 +13,9 @@ router = APIRouter(prefix="/api", tags=["search"])
 
 
 @router.post("/search", response_model=SearchResponse)
-async def search_documents(request: SearchRequest, db: Session = Depends(get_db)):
+async def search_documents(
+    request: SearchRequest, db: Session = Depends(get_db)
+) -> SearchResponse:
     embedder = OllamaEmbedder()
     try:
         if not await embedder.is_available():
@@ -26,7 +30,8 @@ async def search_documents(request: SearchRequest, db: Session = Depends(get_db)
         await embedder.close()
 
     max_results = request.max_results or settings.search_max_results
-    results = search_chunks(
+    results = await asyncio.to_thread(
+        search_chunks,
         db,
         query_embedding,
         settings.search_similarity_threshold,

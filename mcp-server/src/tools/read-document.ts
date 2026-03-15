@@ -15,7 +15,10 @@ export function createReadDocumentHandler(client: DocumentApiClient) {
     } catch (error) {
       return {
         content: [
-          { type: "text" as const, text: `Error reading document: ${(error as Error).message}` },
+          {
+            type: "text" as const,
+            text: `Error reading document: ${(error as Error).message}`,
+          },
         ],
         isError: true,
       };

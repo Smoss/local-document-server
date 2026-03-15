@@ -1,5 +1,5 @@
 .PHONY: help install dev db db-stop db-test db-test-stop test test-py test-mcp \
-        serve mcp-build mcp-start clean lint
+        serve mcp-build mcp-start clean lint format check
 
 help:                          ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -46,6 +46,24 @@ test-py: db-test               ## Run Python tests (auto-starts test db)
 
 test-mcp:                      ## Run MCP server tests
 	cd mcp-server && npm test
+
+# ── Code Quality ─────────────────────────────────────────────────────────
+lint:                          ## Run all linters
+	uv run ruff check src/ tests/
+	uv run mypy src/doc_server/
+	cd mcp-server && npm run lint
+
+format:                        ## Format all code
+	uv run ruff format src/ tests/
+	uv run ruff check --fix src/ tests/
+	cd mcp-server && npm run format
+
+check:                         ## Run linters + format check (CI-friendly)
+	uv run ruff check src/ tests/
+	uv run ruff format --check src/ tests/
+	uv run mypy src/doc_server/
+	cd mcp-server && npm run lint
+	cd mcp-server && npm run format:check
 
 # ── Cleanup ──────────────────────────────────────────────────────────────
 clean:                         ## Stop all containers, remove volumes

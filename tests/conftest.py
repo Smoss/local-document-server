@@ -1,5 +1,4 @@
 import os
-import uuid
 from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -10,12 +9,13 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
 
 # Override settings before importing app modules
-os.environ["DATABASE_URL"] = "postgresql+psycopg://docserver:docserver@localhost:7730/docserver_test"
+os.environ["DATABASE_URL"] = (
+    "postgresql+psycopg://docserver:docserver@localhost:7730/docserver_test"
+)
 
-from doc_server.database import get_db, init_db
+from doc_server.database import get_db
 from doc_server.main import app
 from doc_server.models import Base
-
 
 TEST_DB_URL = "postgresql+psycopg://docserver:docserver@localhost:7730/docserver_test"
 
@@ -78,6 +78,7 @@ def mock_embedder():
         """Deterministic vector based on text hash."""
         h = hash(text) % (2**32)
         import random
+
         rng = random.Random(h)
         return [rng.random() for _ in range(768)]
 

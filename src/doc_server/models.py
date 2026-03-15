@@ -5,6 +5,8 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import DateTime, ForeignKey, Integer, Text, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from doc_server.config import settings
+
 
 class Base(DeclarativeBase):
     pass
@@ -34,6 +36,6 @@ class Chunk(Base):
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"))
     chunk_index: Mapped[int] = mapped_column(Integer)
     content: Mapped[str] = mapped_column(Text)
-    embedding = mapped_column(Vector(768), nullable=True)
+    embedding = mapped_column(Vector(settings.embedding_dim), nullable=True)  # type: ignore[no-untyped-call]
 
     document: Mapped["Document"] = relationship(back_populates="chunks")

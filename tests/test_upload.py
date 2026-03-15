@@ -1,5 +1,5 @@
 import io
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -67,6 +67,7 @@ async def test_upload_persists_metadata(client, db_session):
     data = response.json()
 
     from doc_server.models import Document
+
     doc = db_session.get(Document, data["id"])
     assert doc is not None
     assert doc.filename == "meta.txt"

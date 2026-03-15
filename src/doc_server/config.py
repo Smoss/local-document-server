@@ -2,7 +2,9 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+psycopg://docserver:docserver@localhost:5438/docserver"
+    database_url: str = (
+        "postgresql+psycopg://docserver:docserver@localhost:5438/docserver"
+    )
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "nomic-embed-text"
     embedding_dim: int = 768

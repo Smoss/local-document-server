@@ -53,8 +53,10 @@ async def test_upload_triggers_chunking(client, db_session):
     assert response.status_code == 201
     doc_id = response.json()["id"]
 
-    from doc_server.models import Chunk
     from sqlalchemy import select
+
+    from doc_server.models import Chunk
+
     chunks = db_session.scalars(
         select(Chunk).where(Chunk.document_id == doc_id).order_by(Chunk.chunk_index)
     ).all()
@@ -72,7 +74,9 @@ async def test_upload_ollama_unavailable(client):
 
         response = await client.post(
             "/api/documents",
-            files={"file": ("noembed.txt", io.BytesIO(b"some text here"), "text/plain")},
+            files={
+                "file": ("noembed.txt", io.BytesIO(b"some text here"), "text/plain")
+            },
         )
     assert response.status_code == 201
     assert response.json()["status"] == "pending_embedding"

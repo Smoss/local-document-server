@@ -25,6 +25,7 @@ async def test_get_document_file(client):
 @pytest.mark.asyncio
 async def test_get_nonexistent_document(client):
     import uuid
+
     response = await client.get(f"/api/documents/{uuid.uuid4()}/file")
     assert response.status_code == 404
 
@@ -49,7 +50,13 @@ async def test_list_documents_paginated(client):
         for i in range(3):
             await client.post(
                 "/api/documents",
-                files={"file": (f"page{i}.txt", io.BytesIO(f"content {i}".encode()), "text/plain")},
+                files={
+                    "file": (
+                        f"page{i}.txt",
+                        io.BytesIO(f"content {i}".encode()),
+                        "text/plain",
+                    )
+                },
             )
 
     response = await client.get("/api/documents?page=1&page_size=2")

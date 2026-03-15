@@ -7,9 +7,7 @@ def extract_text(file_path: str, content_type: str) -> str | None:
     return Path(file_path).read_text(encoding="utf-8")
 
 
-def split_into_chunks(
-    text: str, chunk_size: int = 512, overlap: int = 50
-) -> list[str]:
+def split_into_chunks(text: str, chunk_size: int = 512, overlap: int = 50) -> list[str]:
     words = text.split()
     if not words:
         return []

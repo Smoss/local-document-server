@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 
@@ -18,8 +19,23 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
+def _persist_document(db: Session, doc: Document) -> None:
+    db.add(doc)
+    db.flush()
+
+
+def _save_chunks_and_commit(
+    db: Session, doc: Document, chunks: list[Chunk], status: str
+) -> None:
+    for chunk in chunks:
+        db.add(chunk)
+    doc.status = status
+    db.commit()
+    db.refresh(doc)
+
+
 @router.post("", response_model=DocumentResponse, status_code=201)
-async def upload_document(file: UploadFile, db: Session = Depends(get_db)):
+async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Document:
     file_path, unique_name = await save_file(file, settings.upload_dir)
 
     doc = Document(
@@ -28,41 +44,45 @@ async def upload_document(file: UploadFile, db: Session = Depends(get_db)):
         file_path=file_path,
         status="ready",
     )
-    db.add(doc)
-    db.flush()
+    await asyncio.to_thread(_persist_document, db, doc)
 
     # Extract text and create chunks
     text = extract_text(file_path, doc.content_type)
+    chunks: list[Chunk] = []
+    status = "ready"
     if text:
-        chunk_texts = split_into_chunks(text, settings.chunk_size, settings.chunk_overlap)
+        chunk_texts = split_into_chunks(
+            text, settings.chunk_size, settings.chunk_overlap
+        )
         embedder = OllamaEmbedder()
         try:
             embeddings = await embedder.embed_batch(chunk_texts)
             for i, (chunk_text, embedding) in enumerate(zip(chunk_texts, embeddings)):
-                chunk = Chunk(
-                    document_id=doc.id,
-                    chunk_index=i,
-                    content=chunk_text,
-                    embedding=embedding,
+                chunks.append(
+                    Chunk(
+                        document_id=doc.id,
+                        chunk_index=i,
+                        content=chunk_text,
+                        embedding=embedding,
+                    )
                 )
-                db.add(chunk)
-            doc.status = "embedded"
+            status = "embedded"
         except Exception:
             logger.info("Ollama unavailable, storing chunks without embeddings")
             for i, chunk_text in enumerate(chunk_texts):
-                chunk = Chunk(
-                    document_id=doc.id,
-                    chunk_index=i,
-                    content=chunk_text,
-                    embedding=None,
+                chunks.append(
+                    Chunk(
+                        document_id=doc.id,
+                        chunk_index=i,
+                        content=chunk_text,
+                        embedding=None,
+                    )
                 )
-                db.add(chunk)
-            doc.status = "pending_embedding"
+            status = "pending_embedding"
         finally:
             await embedder.close()
 
-    db.commit()
-    db.refresh(doc)
+    await asyncio.to_thread(_save_chunks_and_commit, db, doc, chunks, status)
     return doc
 
 
@@ -71,25 +91,36 @@ def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
-):
+) -> PaginatedDocuments:
     total = db.scalar(select(func.count(Document.id)))
     offset = (page - 1) * page_size
     docs = db.scalars(
-        select(Document).order_by(Document.created_at.desc()).offset(offset).limit(page_size)
+        select(Document)
+        .order_by(Document.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
     ).all()
-    return PaginatedDocuments(items=docs, total=total or 0, page=page, page_size=page_size)
+    return PaginatedDocuments(
+        items=docs, total=total or 0, page=page, page_size=page_size
+    )
 
 
 @router.get("/{document_id}/file")
-def get_document_file(document_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_document_file(
+    document_id: uuid.UUID, db: Session = Depends(get_db)
+) -> FileResponse:
     doc = db.get(Document, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    return FileResponse(doc.file_path, media_type=doc.content_type, filename=doc.filename)
+    return FileResponse(
+        doc.file_path, media_type=doc.content_type, filename=doc.filename
+    )
 
 
 @router.get("/{document_id}/chunks", response_model=list[ChunkResponse])
-def get_document_chunks(document_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_document_chunks(
+    document_id: uuid.UUID, db: Session = Depends(get_db)
+) -> list[Chunk]:
     doc = db.get(Document, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
@@ -98,4 +129,4 @@ def get_document_chunks(document_id: uuid.UUID, db: Session = Depends(get_db)):
         .where(Chunk.document_id == document_id)
         .order_by(Chunk.chunk_index)
     ).all()
-    return chunks
+    return list(chunks)

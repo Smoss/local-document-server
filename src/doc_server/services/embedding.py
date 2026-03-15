@@ -24,7 +24,8 @@ class OllamaEmbedder:
         )
         response.raise_for_status()
         data = response.json()
-        return data["embeddings"]
+        embeddings: list[list[float]] = data["embeddings"]
+        return embeddings
 
     async def is_available(self) -> bool:
         try:
@@ -33,5 +34,5 @@ class OllamaEmbedder:
         except httpx.ConnectError:
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         await self._client.aclose()

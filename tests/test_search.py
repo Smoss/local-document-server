@@ -15,12 +15,22 @@ def _make_vector(seed: int) -> list[float]:
 @pytest.mark.asyncio
 async def test_search_returns_ranked_results(client, db_session):
     # Create a doc with embedded chunks directly
-    doc = Document(filename="search.txt", content_type="text/plain", file_path="/tmp/s.txt", status="embedded")
+    doc = Document(
+        filename="search.txt",
+        content_type="text/plain",
+        file_path="/tmp/s.txt",
+        status="embedded",
+    )
     db_session.add(doc)
     db_session.flush()
 
     for i in range(3):
-        chunk = Chunk(document_id=doc.id, chunk_index=i, content=f"chunk {i} content", embedding=_make_vector(i))
+        chunk = Chunk(
+            document_id=doc.id,
+            chunk_index=i,
+            content=f"chunk {i} content",
+            embedding=_make_vector(i),
+        )
         db_session.add(chunk)
     db_session.commit()
 
@@ -63,12 +73,19 @@ async def test_search_empty_results(client, db_session):
 
 @pytest.mark.asyncio
 async def test_search_includes_metadata(client, db_session):
-    doc = Document(filename="meta.txt", content_type="text/plain", file_path="/tmp/m.txt", status="embedded")
+    doc = Document(
+        filename="meta.txt",
+        content_type="text/plain",
+        file_path="/tmp/m.txt",
+        status="embedded",
+    )
     db_session.add(doc)
     db_session.flush()
 
     vec = _make_vector(99)
-    chunk = Chunk(document_id=doc.id, chunk_index=0, content="metadata chunk", embedding=vec)
+    chunk = Chunk(
+        document_id=doc.id, chunk_index=0, content="metadata chunk", embedding=vec
+    )
     db_session.add(chunk)
     db_session.commit()
 
@@ -91,13 +108,20 @@ async def test_search_includes_metadata(client, db_session):
 
 @pytest.mark.asyncio
 async def test_search_grouped_by_document(client, db_session):
-    doc = Document(filename="grouped.txt", content_type="text/plain", file_path="/tmp/g.txt", status="embedded")
+    doc = Document(
+        filename="grouped.txt",
+        content_type="text/plain",
+        file_path="/tmp/g.txt",
+        status="embedded",
+    )
     db_session.add(doc)
     db_session.flush()
 
     vec = _make_vector(50)
     for i in range(3):
-        chunk = Chunk(document_id=doc.id, chunk_index=i, content=f"group chunk {i}", embedding=vec)
+        chunk = Chunk(
+            document_id=doc.id, chunk_index=i, content=f"group chunk {i}", embedding=vec
+        )
         db_session.add(chunk)
     db_session.commit()
 
@@ -126,7 +150,13 @@ async def test_get_document_chunks(client, db_session):
 
         response = await client.post(
             "/api/documents",
-            files={"file": ("chunks.txt", io.BytesIO(b"hello world this is a test"), "text/plain")},
+            files={
+                "file": (
+                    "chunks.txt",
+                    io.BytesIO(b"hello world this is a test"),
+                    "text/plain",
+                )
+            },
         )
     doc_id = response.json()["id"]
     response = await client.get(f"/api/documents/{doc_id}/chunks")

@@ -11,10 +11,7 @@ export class DocumentApiError extends Error {
 export class DocumentApiClient {
   constructor(private baseUrl: string) {}
 
-  async searchDocuments(
-    query: string,
-    maxResults?: number,
-  ): Promise<unknown> {
+  async searchDocuments(query: string, maxResults?: number): Promise<unknown> {
     const body: Record<string, unknown> = { query };
     if (maxResults !== undefined) body.max_results = maxResults;
 
@@ -35,10 +32,7 @@ export class DocumentApiClient {
     return response as string;
   }
 
-  async listDocuments(
-    page?: number,
-    pageSize?: number,
-  ): Promise<unknown> {
+  async listDocuments(page?: number, pageSize?: number): Promise<unknown> {
     const params = new URLSearchParams();
     if (page !== undefined) params.set("page", String(page));
     if (pageSize !== undefined) params.set("page_size", String(pageSize));
