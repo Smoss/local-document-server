@@ -10,10 +10,15 @@ from sqlalchemy.orm import Session
 from doc_server.config import settings
 from doc_server.database import get_db
 from doc_server.models import Chunk, Document
-from doc_server.schemas import ChunkResponse, DocumentResponse, PaginatedDocuments
+from doc_server.schemas import (
+    ChunkResponse,
+    DocumentResponse,
+    PaginatedDocuments,
+    TextDocumentRequest,
+)
 from doc_server.services.chunking import extract_text, split_into_chunks
 from doc_server.services.embedding import OllamaEmbedder
-from doc_server.services.storage import save_file
+from doc_server.services.storage import save_file, save_text_content
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/documents", tags=["documents"])
@@ -54,6 +59,60 @@ async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Do
         chunk_texts = split_into_chunks(
             text, settings.chunk_size, settings.chunk_overlap
         )
+        embedder = OllamaEmbedder()
+        try:
+            embeddings = await embedder.embed_batch(chunk_texts)
+            for i, (chunk_text, embedding) in enumerate(zip(chunk_texts, embeddings)):
+                chunks.append(
+                    Chunk(
+                        document_id=doc.id,
+                        chunk_index=i,
+                        content=chunk_text,
+                        embedding=embedding,
+                    )
+                )
+            status = "embedded"
+        except Exception:
+            logger.info("Ollama unavailable, storing chunks without embeddings")
+            for i, chunk_text in enumerate(chunk_texts):
+                chunks.append(
+                    Chunk(
+                        document_id=doc.id,
+                        chunk_index=i,
+                        content=chunk_text,
+                        embedding=None,
+                    )
+                )
+            status = "pending_embedding"
+        finally:
+            await embedder.close()
+
+    await asyncio.to_thread(_save_chunks_and_commit, db, doc, chunks, status)
+    return doc
+
+
+@router.post("/text", response_model=DocumentResponse, status_code=201)
+async def upload_text_document(
+    body: TextDocumentRequest, db: Session = Depends(get_db)
+) -> Document:
+    file_path, unique_name = save_text_content(
+        body.content, body.filename, settings.upload_dir
+    )
+
+    doc = Document(
+        filename=body.filename,
+        content_type=body.content_type,
+        file_path=file_path,
+        status="ready",
+    )
+    await asyncio.to_thread(_persist_document, db, doc)
+
+    chunks: list[Chunk] = []
+    status = "ready"
+    chunk_texts = split_into_chunks(
+        body.content, settings.chunk_size, settings.chunk_overlap
+    )
+    if chunk_texts:
         embedder = OllamaEmbedder()
         try:
             embeddings = await embedder.embed_batch(chunk_texts)

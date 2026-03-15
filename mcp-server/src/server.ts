@@ -3,6 +3,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { DocumentApiClient } from "./client.js";
 import { config } from "./config.js";
 import {
+  addDocumentSchema,
+  createAddDocumentHandler,
   createListDocumentsHandler,
   createReadDocumentHandler,
   createSearchDocumentsHandler,
@@ -38,6 +40,13 @@ export function createMcpDocServer(client?: DocumentApiClient): McpServer {
     "List all documents with pagination",
     listDocumentsSchema,
     createListDocumentsHandler(apiClient),
+  );
+
+  server.tool(
+    "add_document",
+    "Add a document by providing its text content",
+    addDocumentSchema,
+    createAddDocumentHandler(apiClient),
   );
 
   return server;

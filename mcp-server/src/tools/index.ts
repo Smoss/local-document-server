@@ -10,3 +10,7 @@ export {
   listDocumentsSchema,
   createListDocumentsHandler,
 } from "./list-documents.js";
+export {
+  addDocumentSchema,
+  createAddDocumentHandler,
+} from "./add-document.js";

@@ -42,6 +42,21 @@ export class DocumentApiClient {
     return this.fetch(path);
   }
 
+  async addDocument(
+    content: string,
+    filename: string,
+    contentType?: string,
+  ): Promise<unknown> {
+    const body: Record<string, unknown> = { content, filename };
+    if (contentType !== undefined) body.content_type = contentType;
+
+    return this.fetch("/api/documents/text", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
   private async fetch(
     path: string,
     init?: RequestInit,

@@ -29,6 +29,12 @@ class ChunkResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class TextDocumentRequest(BaseModel):
+    content: str
+    filename: str
+    content_type: str = "text/plain"
+
+
 class SearchRequest(BaseModel):
     query: str
     max_results: int | None = None
