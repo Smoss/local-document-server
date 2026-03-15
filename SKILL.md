@@ -1,6 +1,6 @@
 ---
 name: local-document-server
-description: Use the local-document-server MCP server to search, read, and list documents stored in the document server. Use when the user asks to find, search, read, or browse documents, or when they use /local-document-server.
+description: Use the local-document-server MCP server to search, read, list, add, and update documents stored in the document server. Use when the user asks to find, search, read, browse, add, or edit documents, or when they use /local-document-server.
 ---
 
 # Local Document Server MCP
@@ -38,6 +38,24 @@ List all documents with pagination.
 - **Input**: `{ page?: number, page_size?: number }`
 - **Output**: Paginated list with document metadata (id, filename, content_type, status, created_at)
 
+### `add_document`
+
+Add a new document by providing its text content directly (no file upload needed).
+
+- **Input**: `{ content: string, filename: string, content_type?: string }`
+- **Output**: Created document metadata
+
+The `content_type` defaults to `text/plain` if omitted. The backend will chunk the content and generate embeddings automatically.
+
+### `update_document`
+
+Update an existing document's content (and optionally its filename).
+
+- **Input**: `{ document_id: string, content: string, filename?: string }` (document_id is a UUID)
+- **Output**: Updated document metadata
+
+The backend re-chunks and re-embeds the new content automatically.
+
 ## Setup & Running
 
 ```bash
@@ -71,12 +89,14 @@ make test-mcp     # MCP server tests only
 | `SEARCH_SIMILARITY_THRESHOLD` | `0.3` | Minimum cosine similarity for search results |
 | `SEARCH_MAX_RESULTS` | `20` | Maximum search results returned |
 
-## Uploading Documents
+## Adding Documents
 
-Documents are uploaded via the FastAPI backend directly (not through MCP):
+Documents can be added two ways:
 
-```bash
-curl -X POST http://localhost:7571/api/documents -F "file=@path/to/file.txt"
-```
+1. **Via MCP** — Use the `add_document` tool to provide text content directly
+2. **Via REST API** — Upload a file to the FastAPI backend:
+   ```bash
+   curl -X POST http://localhost:7571/api/documents -F "file=@path/to/file.txt"
+   ```
 
-The backend extracts text, chunks it, generates embeddings via Ollama, and stores everything in PostgreSQL with pgvector. Documents are then searchable through the MCP tools.
+In both cases, the backend chunks the content, generates embeddings via Ollama, and stores everything in PostgreSQL with pgvector. Documents are then searchable through the MCP tools.
