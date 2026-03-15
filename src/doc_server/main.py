@@ -1,17 +1,14 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 
-from doc_server.config import settings
 from doc_server.database import init_db
 from doc_server.routers import documents, search
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     init_db()
     yield
 

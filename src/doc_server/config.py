@@ -8,7 +8,6 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "nomic-embed-text"
     embedding_dim: int = 768
-    upload_dir: str = "./storage"
     chunk_size: int = 512
     chunk_overlap: int = 50
     search_similarity_threshold: float = 0.3

@@ -4,7 +4,6 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from doc_server.config import settings
 from doc_server.models import Chunk, Document
 from doc_server.services.embedding import OllamaEmbedder
 
@@ -53,7 +52,7 @@ def _save_chunks_and_commit(
 async def chunk_and_embed(
     db: Session, doc: Document, text: str, chunk_size: int, chunk_overlap: int
 ) -> str:
-    """Split text into chunks, embed via Ollama, and persist. Returns resulting status."""
+    """Split text into chunks, embed via Ollama, and persist."""
     chunk_texts = split_into_chunks(text, chunk_size, chunk_overlap)
     chunks: list[Chunk] = []
     status = "ready"

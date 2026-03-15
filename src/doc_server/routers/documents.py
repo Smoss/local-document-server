@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.responses import PlainTextResponse, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -20,30 +20,32 @@ from doc_server.schemas import (
 from doc_server.services.chunking import (
     _persist_document,
     chunk_and_embed,
-    extract_text,
 )
-from doc_server.services.storage import save_file, save_text_content
 
 router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
 @router.post("", response_model=DocumentResponse, status_code=201)
 async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Document:
-    file_path, unique_name = await save_file(file, settings.upload_dir)
+    content_bytes = await file.read()
+    content_type = file.content_type or "application/octet-stream"
 
-    text = extract_text(file_path, file.content_type or "application/octet-stream")
+    text: str | None = None
+    if content_type.startswith("text/"):
+        text = content_bytes.decode("utf-8")
 
     doc = Document(
-        filename=file.filename or unique_name,
-        content_type=file.content_type or "application/octet-stream",
-        file_path=file_path,
+        filename=file.filename or "unnamed",
+        content_type=content_type,
         content=text,
         status="ready",
     )
     await asyncio.to_thread(_persist_document, db, doc)
 
     if text:
-        await chunk_and_embed(db, doc, text, settings.chunk_size, settings.chunk_overlap)
+        await chunk_and_embed(
+            db, doc, text, settings.chunk_size, settings.chunk_overlap
+        )
 
     return doc
 
@@ -52,14 +54,9 @@ async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Do
 async def upload_text_document(
     body: TextDocumentRequest, db: Session = Depends(get_db)
 ) -> Document:
-    file_path, unique_name = save_text_content(
-        body.content, body.filename, settings.upload_dir
-    )
-
     doc = Document(
         filename=body.filename,
         content_type=body.content_type,
-        file_path=file_path,
         content=body.content,
         status="ready",
     )
@@ -125,11 +122,6 @@ def get_document_file(
     doc = db.get(Document, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-
-    if doc.file_path:
-        return FileResponse(
-            doc.file_path, media_type=doc.content_type, filename=doc.filename
-        )
 
     if doc.content is not None:
         return PlainTextResponse(doc.content, media_type=doc.content_type)

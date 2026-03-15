@@ -1,6 +1,5 @@
 import os
 from collections.abc import Generator
-from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
@@ -44,17 +43,9 @@ def db_session(db_engine) -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def tmp_storage(tmp_path) -> Path:
-    storage = tmp_path / "storage"
-    storage.mkdir()
-    return storage
-
-
-@pytest.fixture
-async def client(db_session, tmp_storage) -> AsyncClient:
+async def client(db_session) -> AsyncClient:
     from doc_server.config import settings
 
-    settings.upload_dir = str(tmp_storage)
     settings.database_url = TEST_DB_URL
 
     def override_get_db():
