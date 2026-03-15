@@ -1,5 +1,5 @@
-.PHONY: help install dev db db-stop db-test db-test-stop test test-py test-mcp \
-        serve mcp-build mcp-start clean lint format check
+.PHONY: help install dev db db-stop db-login db-test db-test-stop test test-py test-mcp \
+        serve mcp-build mcp-start clean lint format check migrate migrate-new
 
 help:                          ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
@@ -19,6 +19,9 @@ db:                            ## Start dev PostgreSQL + pgvector
 db-stop:                       ## Stop dev database
 	docker compose down
 
+db-login:                      ## Open psql shell on dev database
+	docker compose exec db psql -U docserver
+
 db-test:                       ## Start test PostgreSQL + pgvector (port 7730)
 	docker compose -f docker-compose.test.yml up -d
 	@echo "Waiting for test PostgreSQL..."
@@ -26,6 +29,13 @@ db-test:                       ## Start test PostgreSQL + pgvector (port 7730)
 
 db-test-stop:                  ## Stop test database
 	docker compose -f docker-compose.test.yml down
+
+# ── Migrations ───────────────────────────────────────────────────────────
+migrate: db                    ## Run Alembic migrations to latest
+	uv run alembic upgrade head
+
+migrate-new:                   ## Generate a new migration (usage: make migrate-new m="description")
+	uv run alembic revision --autogenerate -m "$(m)"
 
 # ── Run ──────────────────────────────────────────────────────────────────
 serve: db                      ## Start the FastAPI server (auto-starts db)

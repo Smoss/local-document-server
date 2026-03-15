@@ -31,7 +31,7 @@ Local document management with semantic search, exposed to AI agents via MCP.
 cp .env.example .env          # configure environment
 make install                  # install Python + Node dependencies
 make db                       # start PostgreSQL with pgvector
-ollama pull nomic-embed-text  # download embedding model (optional)
+ollama pull nomic-embed-text-v2-moe:latest  # download embedding model (optional)
 make serve                    # start FastAPI on port 7571
 make mcp-start                # start MCP server on port 30527 (separate terminal)
 ```

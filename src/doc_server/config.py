@@ -6,7 +6,7 @@ class Settings(BaseSettings):
         "postgresql+psycopg://docserver:docserver@localhost:5438/docserver"
     )
     ollama_url: str = "http://localhost:11434"
-    ollama_model: str = "nomic-embed-text"
+    ollama_model: str = "nomic-embed-text-v2-moe:latest"
     embedding_dim: int = 768
     chunk_size: int = 512
     chunk_overlap: int = 50

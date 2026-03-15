@@ -1,10 +1,13 @@
 import os
 from collections.abc import Generator
+from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 # Override settings before importing app modules
@@ -19,13 +22,17 @@ from doc_server.models import Base
 TEST_DB_URL = "postgresql+psycopg://docserver:docserver@localhost:7730/docserver_test"
 
 
+def _alembic_config() -> Config:
+    ini_path = Path(__file__).resolve().parents[1] / "alembic.ini"
+    cfg = Config(str(ini_path))
+    cfg.set_main_option("sqlalchemy.url", TEST_DB_URL)
+    return cfg
+
+
 @pytest.fixture(scope="session")
 def db_engine():
     engine = create_engine(TEST_DB_URL)
-    with engine.connect() as conn:
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-        conn.commit()
-    Base.metadata.create_all(bind=engine)
+    command.upgrade(_alembic_config(), "head")
     yield engine
     Base.metadata.drop_all(bind=engine)
     engine.dispose()
