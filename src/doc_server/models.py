@@ -39,7 +39,6 @@ class Chunk(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     document_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("documents.id"))
     chunk_index: Mapped[int] = mapped_column(Integer)
-    content: Mapped[str] = mapped_column(Text)
     embedding = mapped_column(Vector(settings.embedding_dim), nullable=True)  # type: ignore[no-untyped-call]
 
     document: Mapped["Document"] = relationship(back_populates="chunks")

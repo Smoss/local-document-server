@@ -15,12 +15,12 @@ SSE endpoint: `http://localhost:{MCP_PORT}/sse` (default port `30527`)
 
 ### `search_documents`
 
-Semantic search across all stored documents.
+Semantic search returning the top K most relevant documents with full content.
 
 - **Input**: `{ query: string }`
-- **Output**: Results grouped by document, each with matching chunks and relevance scores
+- **Output**: Top K documents ranked by best chunk similarity. Each result includes full document `content` plus matching chunks (with `chunk_id`, `chunk_index`, `relevance_score` only — no chunk content).
 
-Use this to find documents related to a topic or question. Results are ranked by cosine similarity against document chunk embeddings.
+Use this to find documents related to a topic or question. Documents are ranked by the cosine similarity of their best-matching chunk embedding. `SEARCH_MAX_RESULTS` controls the maximum number of documents returned (default 20).
 
 ### `read_document`
 
@@ -87,7 +87,7 @@ make test-mcp     # MCP server tests only
 | `CHUNK_SIZE` | `512` | Words per document chunk |
 | `CHUNK_OVERLAP` | `50` | Word overlap between chunks |
 | `SEARCH_SIMILARITY_THRESHOLD` | `0.3` | Minimum cosine similarity for search results |
-| `SEARCH_MAX_RESULTS` | `20` | Maximum search results returned |
+| `SEARCH_MAX_RESULTS` | `20` | Maximum documents returned by search |
 
 ## Adding Documents
 

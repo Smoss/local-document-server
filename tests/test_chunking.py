@@ -81,7 +81,7 @@ async def test_upload_triggers_chunking(client, db_session):
         select(Chunk).where(Chunk.document_id == doc_id).order_by(Chunk.chunk_index)
     ).all()
     assert len(chunks) > 0
-    assert chunks[0].content.startswith("word0")
+    assert chunks[0].chunk_index == 0
 
 
 # @TestID da04f4b6-ac13-4afa-a9db-94e55cb739e2

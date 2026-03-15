@@ -32,7 +32,6 @@ async def test_search_returns_ranked_results(client, db_session):
         chunk = Chunk(
             document_id=doc.id,
             chunk_index=i,
-            content=f"chunk {i} content",
             embedding=_make_vector(i),
         )
         db_session.add(chunk)
@@ -96,7 +95,7 @@ async def test_search_includes_metadata(client, db_session):
 
     vec = _make_vector(99)
     chunk = Chunk(
-        document_id=doc.id, chunk_index=0, content="metadata chunk", embedding=vec
+        document_id=doc.id, chunk_index=0, embedding=vec
     )
     db_session.add(chunk)
     db_session.commit()
@@ -136,7 +135,7 @@ async def test_search_grouped_by_document(client, db_session):
     vec = _make_vector(50)
     for i in range(3):
         chunk = Chunk(
-            document_id=doc.id, chunk_index=i, content=f"group chunk {i}", embedding=vec
+            document_id=doc.id, chunk_index=i, embedding=vec
         )
         db_session.add(chunk)
     db_session.commit()

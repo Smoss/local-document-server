@@ -26,7 +26,6 @@ class PaginatedDocuments(BaseModel):
 class ChunkResponse(BaseModel):
     id: uuid.UUID
     chunk_index: int
-    content: str
 
     model_config = {"from_attributes": True}
 
@@ -50,7 +49,6 @@ class SearchRequest(BaseModel):
 class ChunkResult(BaseModel):
     chunk_id: str
     chunk_index: int
-    content: str
     relevance_score: float
 
 
@@ -58,6 +56,7 @@ class DocumentSearchResult(BaseModel):
     document_id: str
     filename: str
     content_type: str
+    content: str | None = None
     status: str
     created_at: str
     updated_at: str | None = None

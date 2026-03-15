@@ -66,7 +66,6 @@ async def chunk_and_embed(
                     Chunk(
                         document_id=doc.id,
                         chunk_index=i,
-                        content=chunk_text,
                         embedding=embedding,
                     )
                 )
@@ -78,7 +77,6 @@ async def chunk_and_embed(
                     Chunk(
                         document_id=doc.id,
                         chunk_index=i,
-                        content=chunk_text,
                         embedding=None,
                     )
                 )

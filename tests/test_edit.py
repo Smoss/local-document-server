@@ -82,7 +82,7 @@ async def test_update_document_rechunks(client, db_session):
     new_chunk_ids = {str(c.id) for c in new_chunks}
     assert old_chunk_ids.isdisjoint(new_chunk_ids)
     assert len(new_chunks) > 0
-    assert new_chunks[0].content == "completely different text"
+    assert new_chunks[0].chunk_index == 0
 
 
 # @TestID 44abee18-b671-48f9-b0a9-48a17e0e2663
