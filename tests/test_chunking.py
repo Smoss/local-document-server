@@ -40,7 +40,7 @@ def test_chunk_overlap_content():
 @pytest.mark.asyncio
 async def test_upload_triggers_chunking(client, db_session):
     words = " ".join(f"word{i}" for i in range(50))
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("no ollama"))
         instance.close = AsyncMock()
@@ -66,7 +66,7 @@ async def test_upload_triggers_chunking(client, db_session):
 
 @pytest.mark.asyncio
 async def test_upload_ollama_unavailable(client):
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("Connection refused"))
         instance.close = AsyncMock()

@@ -10,6 +10,8 @@ class DocumentResponse(BaseModel):
     content_type: str
     status: str
     created_at: datetime
+    updated_at: datetime | None = None
+    content: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -35,6 +37,11 @@ class TextDocumentRequest(BaseModel):
     content_type: str = "text/plain"
 
 
+class UpdateDocumentRequest(BaseModel):
+    content: str
+    filename: str | None = None
+
+
 class SearchRequest(BaseModel):
     query: str
     max_results: int | None = None
@@ -53,6 +60,7 @@ class DocumentSearchResult(BaseModel):
     content_type: str
     status: str
     created_at: str
+    updated_at: str | None = None
     chunks: list[ChunkResult]
 
 

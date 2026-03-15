@@ -142,7 +142,7 @@ async def test_search_grouped_by_document(client, db_session):
 
 @pytest.mark.asyncio
 async def test_get_document_chunks(client, db_session):
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("no ollama"))
         instance.close = AsyncMock()

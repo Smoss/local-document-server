@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_upload_file_success(client):
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("no ollama"))
         instance.close = AsyncMock()
@@ -31,7 +31,7 @@ async def test_upload_missing_file(client):
 
 @pytest.mark.asyncio
 async def test_upload_duplicate_filename(client):
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("no ollama"))
         instance.close = AsyncMock()
@@ -54,7 +54,7 @@ async def test_upload_duplicate_filename(client):
 
 @pytest.mark.asyncio
 async def test_upload_persists_metadata(client, db_session):
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("no ollama"))
         instance.close = AsyncMock()

@@ -6,7 +6,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_get_document_file(client):
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("no ollama"))
         instance.close = AsyncMock()
@@ -41,7 +41,7 @@ async def test_list_documents_empty(client):
 
 @pytest.mark.asyncio
 async def test_list_documents_paginated(client):
-    with patch("doc_server.routers.documents.OllamaEmbedder") as MockEmbedder:
+    with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
         instance.embed_batch = AsyncMock(side_effect=Exception("no ollama"))
         instance.close = AsyncMock()

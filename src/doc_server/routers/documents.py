@@ -1,9 +1,9 @@
 import asyncio
-import logging
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -15,79 +15,36 @@ from doc_server.schemas import (
     DocumentResponse,
     PaginatedDocuments,
     TextDocumentRequest,
+    UpdateDocumentRequest,
 )
-from doc_server.services.chunking import extract_text, split_into_chunks
-from doc_server.services.embedding import OllamaEmbedder
+from doc_server.services.chunking import (
+    _persist_document,
+    chunk_and_embed,
+    extract_text,
+)
 from doc_server.services.storage import save_file, save_text_content
 
-logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/documents", tags=["documents"])
-
-
-def _persist_document(db: Session, doc: Document) -> None:
-    db.add(doc)
-    db.flush()
-
-
-def _save_chunks_and_commit(
-    db: Session, doc: Document, chunks: list[Chunk], status: str
-) -> None:
-    for chunk in chunks:
-        db.add(chunk)
-    doc.status = status
-    db.commit()
-    db.refresh(doc)
 
 
 @router.post("", response_model=DocumentResponse, status_code=201)
 async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Document:
     file_path, unique_name = await save_file(file, settings.upload_dir)
 
+    text = extract_text(file_path, file.content_type or "application/octet-stream")
+
     doc = Document(
         filename=file.filename or unique_name,
         content_type=file.content_type or "application/octet-stream",
         file_path=file_path,
+        content=text,
         status="ready",
     )
     await asyncio.to_thread(_persist_document, db, doc)
 
-    # Extract text and create chunks
-    text = extract_text(file_path, doc.content_type)
-    chunks: list[Chunk] = []
-    status = "ready"
     if text:
-        chunk_texts = split_into_chunks(
-            text, settings.chunk_size, settings.chunk_overlap
-        )
-        embedder = OllamaEmbedder()
-        try:
-            embeddings = await embedder.embed_batch(chunk_texts)
-            for i, (chunk_text, embedding) in enumerate(zip(chunk_texts, embeddings)):
-                chunks.append(
-                    Chunk(
-                        document_id=doc.id,
-                        chunk_index=i,
-                        content=chunk_text,
-                        embedding=embedding,
-                    )
-                )
-            status = "embedded"
-        except Exception:
-            logger.info("Ollama unavailable, storing chunks without embeddings")
-            for i, chunk_text in enumerate(chunk_texts):
-                chunks.append(
-                    Chunk(
-                        document_id=doc.id,
-                        chunk_index=i,
-                        content=chunk_text,
-                        embedding=None,
-                    )
-                )
-            status = "pending_embedding"
-        finally:
-            await embedder.close()
+        await chunk_and_embed(db, doc, text, settings.chunk_size, settings.chunk_overlap)
 
-    await asyncio.to_thread(_save_chunks_and_commit, db, doc, chunks, status)
     return doc
 
 
@@ -103,45 +60,42 @@ async def upload_text_document(
         filename=body.filename,
         content_type=body.content_type,
         file_path=file_path,
+        content=body.content,
         status="ready",
     )
     await asyncio.to_thread(_persist_document, db, doc)
 
-    chunks: list[Chunk] = []
-    status = "ready"
-    chunk_texts = split_into_chunks(
-        body.content, settings.chunk_size, settings.chunk_overlap
+    await chunk_and_embed(
+        db, doc, body.content, settings.chunk_size, settings.chunk_overlap
     )
-    if chunk_texts:
-        embedder = OllamaEmbedder()
-        try:
-            embeddings = await embedder.embed_batch(chunk_texts)
-            for i, (chunk_text, embedding) in enumerate(zip(chunk_texts, embeddings)):
-                chunks.append(
-                    Chunk(
-                        document_id=doc.id,
-                        chunk_index=i,
-                        content=chunk_text,
-                        embedding=embedding,
-                    )
-                )
-            status = "embedded"
-        except Exception:
-            logger.info("Ollama unavailable, storing chunks without embeddings")
-            for i, chunk_text in enumerate(chunk_texts):
-                chunks.append(
-                    Chunk(
-                        document_id=doc.id,
-                        chunk_index=i,
-                        content=chunk_text,
-                        embedding=None,
-                    )
-                )
-            status = "pending_embedding"
-        finally:
-            await embedder.close()
 
-    await asyncio.to_thread(_save_chunks_and_commit, db, doc, chunks, status)
+    return doc
+
+
+@router.put("/{document_id}", response_model=DocumentResponse)
+async def update_document(
+    document_id: uuid.UUID,
+    body: UpdateDocumentRequest,
+    db: Session = Depends(get_db),
+) -> Document:
+    doc = db.get(Document, document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc.content = body.content
+    if body.filename:
+        doc.filename = body.filename
+    doc.updated_at = datetime.now(timezone.utc)
+
+    # Delete existing chunks
+    db.query(Chunk).filter(Chunk.document_id == doc.id).delete()
+    db.flush()
+
+    # Re-chunk and re-embed
+    await chunk_and_embed(
+        db, doc, body.content, settings.chunk_size, settings.chunk_overlap
+    )
+
     return doc
 
 
@@ -164,16 +118,23 @@ def list_documents(
     )
 
 
-@router.get("/{document_id}/file")
+@router.get("/{document_id}/file", response_model=None)
 def get_document_file(
     document_id: uuid.UUID, db: Session = Depends(get_db)
-) -> FileResponse:
+) -> Response:
     doc = db.get(Document, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    return FileResponse(
-        doc.file_path, media_type=doc.content_type, filename=doc.filename
-    )
+
+    if doc.file_path:
+        return FileResponse(
+            doc.file_path, media_type=doc.content_type, filename=doc.filename
+        )
+
+    if doc.content is not None:
+        return PlainTextResponse(doc.content, media_type=doc.content_type)
+
+    raise HTTPException(status_code=404, detail="Document content not available")
 
 
 @router.get("/{document_id}/chunks", response_model=list[ChunkResponse])

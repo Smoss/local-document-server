@@ -57,6 +57,21 @@ export class DocumentApiClient {
     });
   }
 
+  async updateDocument(
+    documentId: string,
+    content: string,
+    filename?: string,
+  ): Promise<unknown> {
+    const body: Record<string, unknown> = { content };
+    if (filename !== undefined) body.filename = filename;
+
+    return this.fetch(`/api/documents/${documentId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
   private async fetch(
     path: string,
     init?: RequestInit,

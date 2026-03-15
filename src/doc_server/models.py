@@ -18,10 +18,14 @@ class Document(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     filename: Mapped[str]
     content_type: Mapped[str]
-    file_path: Mapped[str]
+    file_path: Mapped[str | None] = mapped_column(nullable=True)
+    content: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(default="ready")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
 
     chunks: Mapped[list["Chunk"]] = relationship(

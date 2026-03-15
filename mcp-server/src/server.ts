@@ -8,9 +8,11 @@ import {
   createListDocumentsHandler,
   createReadDocumentHandler,
   createSearchDocumentsHandler,
+  createUpdateDocumentHandler,
   listDocumentsSchema,
   readDocumentSchema,
   searchDocumentsSchema,
+  updateDocumentSchema,
 } from "./tools/index.js";
 
 export function createMcpDocServer(client?: DocumentApiClient): McpServer {
@@ -47,6 +49,13 @@ export function createMcpDocServer(client?: DocumentApiClient): McpServer {
     "Add a document by providing its text content",
     addDocumentSchema,
     createAddDocumentHandler(apiClient),
+  );
+
+  server.tool(
+    "update_document",
+    "Update a document's content",
+    updateDocumentSchema,
+    createUpdateDocumentHandler(apiClient),
   );
 
   return server;

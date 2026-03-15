@@ -79,10 +79,10 @@ describe("SSE transport", () => {
     await client.connect(transport);
 
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(3);
+    expect(tools).toHaveLength(5);
 
     const names = tools.map((t) => t.name).sort();
-    expect(names).toEqual(["list_documents", "read_document", "search_documents"]);
+    expect(names).toEqual(["add_document", "list_documents", "read_document", "search_documents", "update_document"]);
 
     await client.close();
   });
