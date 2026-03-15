@@ -3,6 +3,10 @@ import { createListDocumentsHandler } from "../../src/tools/list-documents.js";
 import type { DocumentApiClient } from "../../src/client.js";
 
 describe("list_documents tool", () => {
+  // @TestID abd12a86-caa2-450a-abd8-f42b1dc07338
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify list_documents returns paginated document list
   it("returns paginated document list", async () => {
     const mockClient = {
       listDocuments: vi.fn().mockResolvedValue({
@@ -23,6 +27,10 @@ describe("list_documents tool", () => {
     expect(parsed.total).toBe(1);
   });
 
+  // @TestID e57b288e-3b3a-489f-8b5d-cfa7ddb33c8f
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify pagination params are forwarded to the API client
   it("forwards pagination params", async () => {
     const mockClient = {
       listDocuments: vi.fn().mockResolvedValue({ items: [], total: 0, page: 3, page_size: 5 }),

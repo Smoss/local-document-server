@@ -9,6 +9,10 @@ describe("DocumentApiClient", () => {
     vi.restoreAllMocks();
   });
 
+  // @TestID 4a713c7d-2d49-4f62-aa8e-b86ef5366fd8
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify searchDocuments constructs the correct POST URL
   it("constructs correct URL for searchDocuments", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -27,6 +31,10 @@ describe("DocumentApiClient", () => {
     );
   });
 
+  // @TestID f0227a42-7276-4c3f-90ee-b9e272307301
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify listDocuments constructs URL with pagination query params
   it("constructs correct URL for listDocuments with pagination", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -42,6 +50,10 @@ describe("DocumentApiClient", () => {
     );
   });
 
+  // @TestID 4f26462f-4805-40a7-8cbb-d898e8b72c09
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify readDocument constructs the correct file URL
   it("constructs correct URL for readDocument", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -58,6 +70,10 @@ describe("DocumentApiClient", () => {
     expect(result).toBe("file content");
   });
 
+  // @TestID 3aa8a269-8bec-490b-b68f-54f39a9ff037
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify fetch network errors are wrapped in DocumentApiError
   it("wraps fetch errors in DocumentApiError", async () => {
     vi.stubGlobal(
       "fetch",
@@ -69,6 +85,10 @@ describe("DocumentApiClient", () => {
     );
   });
 
+  // @TestID 07963e54-e067-48f7-ae30-c07b94dfd6c2
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify non-ok HTTP responses are wrapped in DocumentApiError
   it("wraps non-ok responses in DocumentApiError", async () => {
     vi.stubGlobal(
       "fetch",

@@ -4,6 +4,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 
+# @TestID 2897fd56-c0ae-4513-8315-66a2e0f8e105
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Upload a text file and verify 201 response with correct metadata
 @pytest.mark.asyncio
 async def test_upload_file_success(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
@@ -23,12 +27,20 @@ async def test_upload_file_success(client):
     assert "id" in data
 
 
+# @TestID 53d8fb3f-2354-47a1-b48d-e958adef4316
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription POST /documents without a file returns 422
 @pytest.mark.asyncio
 async def test_upload_missing_file(client):
     response = await client.post("/api/documents")
     assert response.status_code == 422
 
 
+# @TestID 4351a0a9-e6fa-4e6a-b2ea-4a4f6c7a7a4e
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Uploading two files with the same name creates two distinct documents
 @pytest.mark.asyncio
 async def test_upload_duplicate_filename(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
@@ -52,6 +64,10 @@ async def test_upload_duplicate_filename(client):
     assert r1.json()["id"] != r2.json()["id"]
 
 
+# @TestID d366805e-3501-43e8-b408-36324e22ac51
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Uploaded document metadata is persisted correctly in the database
 @pytest.mark.asyncio
 async def test_upload_persists_metadata(client, db_session):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:

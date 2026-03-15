@@ -6,18 +6,30 @@ import pytest
 from doc_server.services.chunking import extract_text, split_into_chunks
 
 
+# @TestID 55dcc489-1f28-4c7e-a695-9adc56fba14c
+# @SystemName Document API
+# @TestType Unit
+# @TestDescription Verify extract_text reads text/plain files correctly
 def test_text_extraction(tmp_path):
     f = tmp_path / "test.txt"
     f.write_text("Hello, world!")
     assert extract_text(str(f), "text/plain") == "Hello, world!"
 
 
+# @TestID 55fde55d-d102-4354-8d7c-3d80257fef37
+# @SystemName Document API
+# @TestType Unit
+# @TestDescription Verify extract_text returns None for non-text content types
 def test_text_extraction_non_text(tmp_path):
     f = tmp_path / "test.bin"
     f.write_bytes(b"\x00\x01\x02")
     assert extract_text(str(f), "application/octet-stream") is None
 
 
+# @TestID 734ea94f-454c-4ed1-aaef-ca36904c3e89
+# @SystemName Document API
+# @TestType Unit
+# @TestDescription Verify split_into_chunks produces correctly sized chunks
 def test_chunk_splitting():
     words = " ".join(f"word{i}" for i in range(100))
     chunks = split_into_chunks(words, chunk_size=30, overlap=5)
@@ -27,6 +39,10 @@ def test_chunk_splitting():
         assert len(chunk.split()) <= 30
 
 
+# @TestID 99a4f5a2-04e7-4819-b08d-fe8e72aea28f
+# @SystemName Document API
+# @TestType Unit
+# @TestDescription Verify chunk overlap preserves expected words between chunks
 def test_chunk_overlap_content():
     words = " ".join(f"w{i}" for i in range(20))
     chunks = split_into_chunks(words, chunk_size=10, overlap=3)
@@ -37,6 +53,10 @@ def test_chunk_overlap_content():
     assert first_words[-3:] == second_words[:3]
 
 
+# @TestID 381ef3b6-830d-4c04-ab78-e9b874d87618
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Upload a text file and verify chunks are created in the database
 @pytest.mark.asyncio
 async def test_upload_triggers_chunking(client, db_session):
     words = " ".join(f"word{i}" for i in range(50))
@@ -64,6 +84,10 @@ async def test_upload_triggers_chunking(client, db_session):
     assert chunks[0].content.startswith("word0")
 
 
+# @TestID da04f4b6-ac13-4afa-a9db-94e55cb739e2
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Upload when Ollama is unavailable results in pending_embedding status
 @pytest.mark.asyncio
 async def test_upload_ollama_unavailable(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:

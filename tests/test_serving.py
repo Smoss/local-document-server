@@ -4,6 +4,10 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 
+# @TestID 731bce7d-6b55-4ae1-896a-4c1f73483ae9
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Upload a file then GET /documents/{id}/file returns its content
 @pytest.mark.asyncio
 async def test_get_document_file(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
@@ -22,6 +26,10 @@ async def test_get_document_file(client):
     assert response.content == b"serve content"
 
 
+# @TestID f95f3a59-5888-43ce-9259-06432a65e1b8
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription GET /documents/{id}/file for nonexistent document returns 404
 @pytest.mark.asyncio
 async def test_get_nonexistent_document(client):
     import uuid
@@ -30,6 +38,10 @@ async def test_get_nonexistent_document(client):
     assert response.status_code == 404
 
 
+# @TestID 062fab16-ff92-47f3-958f-bf94d27ac551
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription GET /documents with no documents returns empty list and total 0
 @pytest.mark.asyncio
 async def test_list_documents_empty(client):
     response = await client.get("/api/documents")
@@ -39,6 +51,10 @@ async def test_list_documents_empty(client):
     assert data["total"] == 0
 
 
+# @TestID 38133572-7623-4ace-b0d8-ef01e0b50968
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription GET /documents with pagination returns correct page size and total
 @pytest.mark.asyncio
 async def test_list_documents_paginated(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:

@@ -4,6 +4,10 @@ import { DocumentApiError } from "../../src/client.js";
 import type { DocumentApiClient } from "../../src/client.js";
 
 describe("update_document tool", () => {
+  // @TestID 0561bb67-0b99-4ea3-b68c-86ee2d512f69
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify update_document forwards params to API client and returns response
   it("forwards document_id and content to the API client and returns the response", async () => {
     const mockClient = {
       updateDocument: vi.fn().mockResolvedValue({
@@ -33,6 +37,10 @@ describe("update_document tool", () => {
     expect(result).not.toHaveProperty("isError");
   });
 
+  // @TestID 40d21c9e-3045-44c6-b054-a7990ee866e2
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify update_document returns isError when API is unreachable
   it("returns isError true when the Document API is unreachable", async () => {
     const mockClient = {
       updateDocument: vi

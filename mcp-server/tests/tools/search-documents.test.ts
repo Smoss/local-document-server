@@ -3,6 +3,10 @@ import { createSearchDocumentsHandler } from "../../src/tools/search-documents.j
 import type { DocumentApiClient } from "../../src/client.js";
 
 describe("search_documents tool", () => {
+  // @TestID 455f2b15-d737-441c-8ee5-abdbd94c26de
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify search returns JSON with chunks and metadata
   it("returns JSON response with chunks and metadata", async () => {
     const mockClient = {
       searchDocuments: vi.fn().mockResolvedValue({
@@ -37,6 +41,10 @@ describe("search_documents tool", () => {
     expect(parsed.results[0].chunks[0].relevance_score).toBe(0.95);
   });
 
+  // @TestID 4f0adbf6-393d-40a7-9453-d48a4f23fd91
+  // @SystemName Document MCP Server
+  // @TestType Unit
+  // @TestDescription Verify search with no matches returns empty results array
   it("returns empty results", async () => {
     const mockClient = {
       searchDocuments: vi.fn().mockResolvedValue({

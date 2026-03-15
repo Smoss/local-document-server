@@ -6,6 +6,10 @@ import pytest
 from doc_server.models import Chunk
 
 
+# @TestID 7aa136c8-f059-4597-aa94-40929940ae05
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Upload a doc, PUT new content, verify response has updated content and updated_at is set
 @pytest.mark.asyncio
 async def test_update_document_replaces_content(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
@@ -37,6 +41,10 @@ async def test_update_document_replaces_content(client):
     assert data["updated_at"] is not None
 
 
+# @TestID 799d90e7-6cb9-41a4-ac76-828a5993b3ea
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Upload a doc, PUT new content, verify old chunks are gone and new chunks match new content
 @pytest.mark.asyncio
 async def test_update_document_rechunks(client, db_session):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
@@ -77,6 +85,10 @@ async def test_update_document_rechunks(client, db_session):
     assert new_chunks[0].content == "completely different text"
 
 
+# @TestID 44abee18-b671-48f9-b0a9-48a17e0e2663
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription PUT to nonexistent UUID returns 404
 @pytest.mark.asyncio
 async def test_update_document_404(client):
     fake_id = str(uuid.uuid4())
@@ -87,6 +99,10 @@ async def test_update_document_404(client):
     assert response.status_code == 404
 
 
+# @TestID 46d3bd15-dc1d-4bf9-85ef-1d9d597208cb
+# @SystemName Document API
+# @TestType Integration
+# @TestDescription Mock Ollama to fail, verify status is pending_embedding after update
 @pytest.mark.asyncio
 async def test_update_document_pending_embedding(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:

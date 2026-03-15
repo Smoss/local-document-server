@@ -73,6 +73,10 @@ afterAll(async () => {
 });
 
 describe("SSE transport", () => {
+  // @TestID 557c943a-a2ef-42ba-bf76-65a168a0d8d5
+  // @SystemName Document MCP Server
+  // @TestType Integration
+  // @TestDescription Verify all registered tools are listed via SSE transport
   it("lists all three tools via SSE", async () => {
     const transport = new SSEClientTransport(new URL(`${baseUrl}/sse`));
     const client = new Client({ name: "test-client", version: "0.1.0" });
@@ -87,6 +91,10 @@ describe("SSE transport", () => {
     await client.close();
   });
 
+  // @TestID 87976edd-a19d-4e98-b24a-74a5fc10b268
+  // @SystemName Document MCP Server
+  // @TestType Integration
+  // @TestDescription Verify list_documents tool can be called and returns results via SSE
   it("calls list_documents tool via SSE", async () => {
     const transport = new SSEClientTransport(new URL(`${baseUrl}/sse`));
     const client = new Client({ name: "test-client", version: "0.1.0" });
