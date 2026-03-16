@@ -115,7 +115,3 @@ make test-mcp   # MCP server tests only
 ```
 
 Tests use an isolated PostgreSQL instance so they don't affect your dev database.
-
-## Telemetry
-
-No dependencies in this project send telemetry.
