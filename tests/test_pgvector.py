@@ -104,9 +104,7 @@ async def test_null_embedding_excluded(db_session):
     db_session.add_all([chunk_with, chunk_without])
     await db_session.flush()
 
-    result = await db_session.scalars(
-        select(Chunk).where(Chunk.embedding.isnot(None))
-    )
+    result = await db_session.scalars(select(Chunk).where(Chunk.embedding.isnot(None)))
     results = result.all()
 
     chunk_ids = [c.id for c in results]

@@ -78,9 +78,7 @@ async def test_update_document_rechunks(client, db_session):
         )
 
     # Verify old chunks are gone and new ones exist
-    result = await db_session.scalars(
-        select(Chunk).where(Chunk.document_id == doc_id)
-    )
+    result = await db_session.scalars(select(Chunk).where(Chunk.document_id == doc_id))
     new_chunks = result.all()
     new_chunk_ids = {str(c.id) for c in new_chunks}
     assert old_chunk_ids.isdisjoint(new_chunk_ids)
