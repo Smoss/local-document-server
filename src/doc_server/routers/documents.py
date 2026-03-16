@@ -31,7 +31,7 @@ async def upload_document(
     content_type = file.content_type or "application/octet-stream"
     filename = file.filename or "unnamed"
     logger.info(
-        "Uploading file '%s' (%s, %d bytes)", filename, content_type, len(content_bytes)
+        f"Uploading file '{filename}' ({content_type}, {len(content_bytes)} bytes)"
     )
 
     text: str | None = None
@@ -51,7 +51,7 @@ async def upload_document(
             db, doc, text, settings.chunk_size, settings.chunk_overlap
         )
 
-    logger.info("Created document %s (status=%s)", doc.id, doc.status)
+    logger.info(f"Created document {doc.id} (status={doc.status})")
     return doc
 
 
@@ -60,7 +60,7 @@ async def upload_text_document(
     body: TextDocumentRequest, db: AsyncSession = Depends(get_db)
 ) -> Document:
     logger.info(
-        "Uploading text document '%s' (%d chars)", body.filename, len(body.content)
+        f"Uploading text document '{body.filename}' ({len(body.content)} chars)"
     )
 
     doc = Document(
@@ -75,7 +75,7 @@ async def upload_text_document(
         db, doc, body.content, settings.chunk_size, settings.chunk_overlap
     )
 
-    logger.info("Created text document %s (status=%s)", doc.id, doc.status)
+    logger.info(f"Created text document {doc.id} (status={doc.status})")
     return doc
 
 
@@ -85,13 +85,13 @@ async def update_document(
     body: UpdateDocumentRequest,
     db: AsyncSession = Depends(get_db),
 ) -> Document:
-    logger.info("Updating document %s", document_id)
+    logger.info(f"Updating document {document_id}")
     doc = await document_store.get_document(db, document_id)
     if not doc:
-        logger.warning("Document %s not found for update", document_id)
+        logger.warning(f"Document {document_id} not found for update")
         raise HTTPException(status_code=404, detail="Document not found")
 
-    updates: dict = {"content": body.content}
+    updates: dict[str, str] = {"content": body.content}
     if body.filename:
         updates["filename"] = body.filename
     await document_store.update_document(db, doc, **updates)
@@ -102,7 +102,7 @@ async def update_document(
         db, doc, body.content, settings.chunk_size, settings.chunk_overlap
     )
 
-    logger.info("Updated document %s (status=%s)", doc.id, doc.status)
+    logger.info(f"Updated document {doc.id} (status={doc.status})")
     return doc
 
 
@@ -112,10 +112,10 @@ async def list_documents(
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ) -> PaginatedDocuments:
-    logger.info("Listing documents (page=%d, page_size=%d)", page, page_size)
+    logger.info(f"Listing documents (page={page}, page_size={page_size})")
     offset = (page - 1) * page_size
     docs, total = await document_store.list_documents(db, offset, page_size)
-    logger.info("Returning %d of %d documents", len(docs), total)
+    logger.info(f"Returning {len(docs)} of {total} documents")
     return PaginatedDocuments(items=docs, total=total, page=page, page_size=page_size)
 
 
@@ -123,16 +123,16 @@ async def list_documents(
 async def get_document_file(
     document_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 ) -> Response:
-    logger.info("Serving file for document %s", document_id)
+    logger.info(f"Serving file for document {document_id}")
     doc = await document_store.get_document(db, document_id)
     if not doc:
-        logger.warning("Document %s not found", document_id)
+        logger.warning(f"Document {document_id} not found")
         raise HTTPException(status_code=404, detail="Document not found")
 
     if doc.content is not None:
         return PlainTextResponse(doc.content, media_type=doc.content_type)
 
-    logger.warning("Document %s has no content", document_id)
+    logger.warning(f"Document {document_id} has no content")
     raise HTTPException(status_code=404, detail="Document content not available")
 
 
@@ -140,11 +140,11 @@ async def get_document_file(
 async def get_document_chunks(
     document_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 ) -> list[Chunk]:
-    logger.info("Fetching chunks for document %s", document_id)
+    logger.info(f"Fetching chunks for document {document_id}")
     doc = await document_store.get_document(db, document_id)
     if not doc:
-        logger.warning("Document %s not found", document_id)
+        logger.warning(f"Document {document_id} not found")
         raise HTTPException(status_code=404, detail="Document not found")
     chunks = await chunk_store.get_chunks_for_document(db, document_id)
-    logger.info("Returning %d chunks for document %s", len(chunks), document_id)
+    logger.info(f"Returning {len(chunks)} chunks for document {document_id}")
     return chunks

@@ -16,12 +16,12 @@ async def search_documents(
     max_results: int,
 ) -> list[dict[str, Any]]:
     logger.info(
-        "Searching chunks (threshold=%.2f, max_results=%d)", threshold, max_results
+        f"Searching chunks (threshold={threshold:.2f}, max_results={max_results})"
     )
     results = await chunk_store.search_similar_chunks(
         db, query_embedding, threshold, max_results
     )
-    logger.info("Found %d matching chunk(s)", len(results))
+    logger.info(f"Found {len(results)} matching chunk(s)")
 
     grouped: OrderedDict[str, dict[str, Any]] = OrderedDict()
     for chunk, document, dist in results:
@@ -45,5 +45,5 @@ async def search_documents(
             }
         )
 
-    logger.info("Grouped results into %d document(s)", len(grouped))
+    logger.info(f"Grouped results into {len(grouped)} document(s)")
     return list(grouped.values())

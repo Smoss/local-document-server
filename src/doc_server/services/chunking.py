@@ -33,11 +33,8 @@ async def chunk_and_embed(
     """Split text into chunks, embed via Ollama, and persist."""
     chunk_texts = split_into_chunks(text, chunk_size, chunk_overlap)
     logger.info(
-        "Split document %s into %d chunk(s) (chunk_size=%d, overlap=%d)",
-        doc.id,
-        len(chunk_texts),
-        chunk_size,
-        chunk_overlap,
+        f"Split document {doc.id} into {len(chunk_texts)} chunk(s) "
+        "(chunk_size={chunk_size}, overlap={chunk_overlap})"
     )
     chunks: list[Chunk] = []
     status = "ready"
@@ -55,12 +52,11 @@ async def chunk_and_embed(
                     )
                 )
             status = "embedded"
-            logger.info("Embedded %d chunk(s) for document %s", len(chunks), doc.id)
+            logger.info(f"Embedded {len(chunks)} chunk(s) for document {doc.id}")
         except Exception:
             logger.warning(
-                "Ollama unavailable, storing %d chunk(s) without embeddings for document %s",
-                len(chunk_texts),
-                doc.id,
+                f"Ollama unavailable, storing {len(chunk_texts)} chunk(s) "
+                "without embeddings for document {doc.id}"
             )
             for i, chunk_text in enumerate(chunk_texts):
                 chunks.append(
@@ -77,5 +73,5 @@ async def chunk_and_embed(
     await chunk_store.save_chunks(db, chunks)
     await document_store.update_document(db, doc, status=status)
     await document_store.commit_and_refresh(db, doc)
-    logger.info("Persisted document %s with status '%s'", doc.id, status)
+    logger.info(f"Persisted document {doc.id} with status '{status}'")
     return status

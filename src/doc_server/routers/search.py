@@ -19,7 +19,7 @@ async def search(
     request: SearchRequest, db: AsyncSession = Depends(get_db)
 ) -> SearchResponse:
     logger.info(
-        "Search request: query='%s', max_results=%s", request.query, request.max_results
+        f"Search request: query='{request.query}', max_results={request.max_results}"
     )
     embedder = OllamaEmbedder()
     try:
@@ -43,5 +43,5 @@ async def search(
         settings.search_similarity_threshold,
         max_results,
     )
-    logger.info("Search returned %d document(s)", len(results))
+    logger.info(f"Search returned {len(results)} document(s)")
     return SearchResponse(query=request.query, results=results)
