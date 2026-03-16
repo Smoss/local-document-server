@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from doc_server.models import Chunk, Document
 from doc_server.services.embedding import OllamaEmbedder
+from doc_server.stores import chunk_store, document_store
 
 logger = logging.getLogger(__name__)
 
@@ -24,21 +25,6 @@ def split_into_chunks(text: str, chunk_size: int = 512, overlap: int = 50) -> li
         start = end - overlap
 
     return chunks
-
-
-async def _persist_document(db: AsyncSession, doc: Document) -> None:
-    db.add(doc)
-    await db.flush()
-
-
-async def _save_chunks_and_commit(
-    db: AsyncSession, doc: Document, chunks: list[Chunk], status: str
-) -> None:
-    for chunk in chunks:
-        db.add(chunk)
-    doc.status = status
-    await db.commit()
-    await db.refresh(doc)
 
 
 async def chunk_and_embed(
@@ -76,5 +62,7 @@ async def chunk_and_embed(
         finally:
             await embedder.close()
 
-    await _save_chunks_and_commit(db, doc, chunks, status)
+    await chunk_store.save_chunks(db, chunks)
+    await document_store.update_document(db, doc, status=status)
+    await document_store.commit_and_refresh(db, doc)
     return status

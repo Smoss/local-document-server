@@ -42,7 +42,7 @@ make mcp-start                # start MCP server on port 30527 (separate termina
 |---|---|---|
 | `DATABASE_URL` | `postgresql+psycopg://docserver:docserver@localhost:5438/docserver` | PostgreSQL connection string |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama API URL |
-| `OLLAMA_MODEL` | `nomic-embed-text` | Embedding model name |
+| `OLLAMA_MODEL` | `nomic-embed-text-v2-moe:latest` | Embedding model name |
 | `EMBEDDING_DIM` | `768` | Embedding vector dimensions |
 | `UPLOAD_DIR` | `./storage` | File storage directory |
 | `CHUNK_SIZE` | `512` | Words per chunk |
@@ -50,7 +50,7 @@ make mcp-start                # start MCP server on port 30527 (separate termina
 | `SEARCH_SIMILARITY_THRESHOLD` | `0.3` | Minimum cosine similarity for search results |
 | `SEARCH_MAX_RESULTS` | `20` | Maximum search results returned |
 | `MCP_PORT` | `30527` | MCP server port |
-| `DOCUMENT_API_BASE_URL` | `http://localhost:7571` | FastAPI URL used by the MCP server (set when running on a different host) |
+| `DOCUMENT_API_BASE_URL` | `http://localhost:7571` | FastAPI URL used by the MCP server |
 
 ## MCP Server
 
@@ -65,6 +65,8 @@ The MCP server exposes document operations to AI agents over SSE.
 | `search_documents` | Search documents by semantic similarity |
 | `read_document` | Read a document's content by ID |
 | `list_documents` | List all documents with pagination |
+| `add_document` | Add a new document by text content |
+| `update_document` | Update an existing document's content |
 
 ### Client Configuration
 
@@ -82,12 +84,27 @@ The MCP server exposes document operations to AI agents over SSE.
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/documents` | Upload a document |
+| `POST` | `/api/documents` | Upload a document (multipart file) |
+| `POST` | `/api/documents/text` | Upload a document (JSON text body) |
+| `PUT` | `/api/documents/{id}` | Update a document (re-chunks and re-embeds) |
 | `GET` | `/api/documents` | List documents (paginated) |
 | `GET` | `/api/documents/{id}/file` | Download original file |
 | `GET` | `/api/documents/{id}/chunks` | Get document chunks |
 | `POST` | `/api/search` | Semantic search across documents |
 | `GET` | `/health` | Health check |
+
+## Development
+
+```bash
+make help           # show all available targets
+make lint           # run ruff, mypy, eslint, prettier check
+make format         # auto-format with ruff and prettier
+make check          # lint + format check (CI-friendly)
+make migrate        # run Alembic migrations to latest
+make migrate-new m="description"  # generate a new migration
+make db-login       # open psql shell on dev database
+make clean          # stop containers, remove volumes, clean build artifacts
+```
 
 ## Testing
 

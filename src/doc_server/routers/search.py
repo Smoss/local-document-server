@@ -5,13 +5,13 @@ from doc_server.config import settings
 from doc_server.database import get_db
 from doc_server.schemas import SearchRequest, SearchResponse
 from doc_server.services.embedding import OllamaEmbedder
-from doc_server.services.search import search_chunks
+from doc_server.services.search import search_documents
 
 router = APIRouter(prefix="/api", tags=["search"])
 
 
 @router.post("/search", response_model=SearchResponse)
-async def search_documents(
+async def search(
     request: SearchRequest, db: AsyncSession = Depends(get_db)
 ) -> SearchResponse:
     embedder = OllamaEmbedder()
@@ -28,7 +28,7 @@ async def search_documents(
         await embedder.close()
 
     max_results = request.max_results or settings.search_max_results
-    results = await search_chunks(
+    results = await search_documents(
         db,
         query_embedding,
         settings.search_similarity_threshold,

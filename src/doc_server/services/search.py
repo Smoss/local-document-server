@@ -1,49 +1,21 @@
 from collections import OrderedDict
 from typing import Any
 
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from doc_server.models import Chunk, Document
+from doc_server.stores import chunk_store
 
 
-async def search_chunks(
+async def search_documents(
     db: AsyncSession,
     query_embedding: list[float],
     threshold: float,
     max_results: int,
 ) -> list[dict[str, Any]]:
-    distance_expr = Chunk.embedding.cosine_distance(query_embedding)
-    distance = distance_expr.label("distance")
-
-    # Subquery: best (minimum) distance per document, limited to top K documents
-    best_per_doc = (
-        select(
-            Chunk.document_id,
-            func.min(distance_expr).label("best_distance"),
-        )
-        .where(Chunk.embedding.isnot(None))
-        .where(distance_expr <= (1 - threshold))
-        .group_by(Chunk.document_id)
-        .order_by(func.min(distance_expr))
-        .limit(max_results)
-        .subquery()
+    results = await chunk_store.search_similar_chunks(
+        db, query_embedding, threshold, max_results
     )
 
-    # Get all matching chunks for the top K documents
-    stmt = (
-        select(Chunk, Document, distance)
-        .join(Document, Chunk.document_id == Document.id)
-        .join(best_per_doc, Document.id == best_per_doc.c.document_id)
-        .where(Chunk.embedding.isnot(None))
-        .where(distance_expr <= (1 - threshold))
-        .order_by(best_per_doc.c.best_distance, distance)
-    )
-
-    result = await db.execute(stmt)
-    results = result.all()
-
-    # Group by document, preserving order of best match
     grouped: OrderedDict[str, dict[str, Any]] = OrderedDict()
     for chunk, document, dist in results:
         score = 1 - dist
