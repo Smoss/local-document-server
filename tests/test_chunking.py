@@ -3,27 +3,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from doc_server.services.chunking import extract_text, split_into_chunks
-
-
-# @TestID 55dcc489-1f28-4c7e-a695-9adc56fba14c
-# @SystemName Document API
-# @TestType Unit
-# @TestDescription Verify extract_text reads text/plain files correctly
-def test_text_extraction(tmp_path):
-    f = tmp_path / "test.txt"
-    f.write_text("Hello, world!")
-    assert extract_text(str(f), "text/plain") == "Hello, world!"
-
-
-# @TestID 55fde55d-d102-4354-8d7c-3d80257fef37
-# @SystemName Document API
-# @TestType Unit
-# @TestDescription Verify extract_text returns None for non-text content types
-def test_text_extraction_non_text(tmp_path):
-    f = tmp_path / "test.bin"
-    f.write_bytes(b"\x00\x01\x02")
-    assert extract_text(str(f), "application/octet-stream") is None
+from doc_server.services.chunking import split_into_chunks
 
 
 # @TestID 734ea94f-454c-4ed1-aaef-ca36904c3e89
@@ -77,9 +57,10 @@ async def test_upload_triggers_chunking(client, db_session):
 
     from doc_server.models import Chunk
 
-    chunks = db_session.scalars(
+    result = await db_session.scalars(
         select(Chunk).where(Chunk.document_id == doc_id).order_by(Chunk.chunk_index)
-    ).all()
+    )
+    chunks = result.all()
     assert len(chunks) > 0
     assert chunks[0].chunk_index == 0
 

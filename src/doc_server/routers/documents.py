@@ -1,11 +1,10 @@
-import asyncio
 import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile
 from fastapi.responses import PlainTextResponse, Response
-from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from doc_server.config import settings
 from doc_server.database import get_db
@@ -26,7 +25,9 @@ router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
 @router.post("", response_model=DocumentResponse, status_code=201)
-async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Document:
+async def upload_document(
+    file: UploadFile, db: AsyncSession = Depends(get_db)
+) -> Document:
     content_bytes = await file.read()
     content_type = file.content_type or "application/octet-stream"
 
@@ -40,7 +41,7 @@ async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Do
         content=text,
         status="ready",
     )
-    await asyncio.to_thread(_persist_document, db, doc)
+    await _persist_document(db, doc)
 
     if text:
         await chunk_and_embed(
@@ -52,7 +53,7 @@ async def upload_document(file: UploadFile, db: Session = Depends(get_db)) -> Do
 
 @router.post("/text", response_model=DocumentResponse, status_code=201)
 async def upload_text_document(
-    body: TextDocumentRequest, db: Session = Depends(get_db)
+    body: TextDocumentRequest, db: AsyncSession = Depends(get_db)
 ) -> Document:
     doc = Document(
         filename=body.filename,
@@ -60,7 +61,7 @@ async def upload_text_document(
         content=body.content,
         status="ready",
     )
-    await asyncio.to_thread(_persist_document, db, doc)
+    await _persist_document(db, doc)
 
     await chunk_and_embed(
         db, doc, body.content, settings.chunk_size, settings.chunk_overlap
@@ -73,9 +74,9 @@ async def upload_text_document(
 async def update_document(
     document_id: uuid.UUID,
     body: UpdateDocumentRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> Document:
-    doc = db.get(Document, document_id)
+    doc = await db.get(Document, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -85,8 +86,8 @@ async def update_document(
     doc.updated_at = datetime.now(timezone.utc)
 
     # Delete existing chunks
-    db.query(Chunk).filter(Chunk.document_id == doc.id).delete()
-    db.flush()
+    await db.execute(delete(Chunk).where(Chunk.document_id == doc.id))
+    await db.flush()
 
     # Re-chunk and re-embed
     await chunk_and_embed(
@@ -97,29 +98,30 @@ async def update_document(
 
 
 @router.get("", response_model=PaginatedDocuments)
-def list_documents(
+async def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> PaginatedDocuments:
-    total = db.scalar(select(func.count(Document.id)))
+    total = await db.scalar(select(func.count(Document.id)))
     offset = (page - 1) * page_size
-    docs = db.scalars(
+    result = await db.scalars(
         select(Document)
         .order_by(Document.created_at.desc())
         .offset(offset)
         .limit(page_size)
-    ).all()
+    )
+    docs = result.all()
     return PaginatedDocuments(
         items=docs, total=total or 0, page=page, page_size=page_size
     )
 
 
 @router.get("/{document_id}/file", response_model=None)
-def get_document_file(
-    document_id: uuid.UUID, db: Session = Depends(get_db)
+async def get_document_file(
+    document_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 ) -> Response:
-    doc = db.get(Document, document_id)
+    doc = await db.get(Document, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
 
@@ -130,15 +132,15 @@ def get_document_file(
 
 
 @router.get("/{document_id}/chunks", response_model=list[ChunkResponse])
-def get_document_chunks(
-    document_id: uuid.UUID, db: Session = Depends(get_db)
+async def get_document_chunks(
+    document_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 ) -> list[Chunk]:
-    doc = db.get(Document, document_id)
+    doc = await db.get(Document, document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
-    chunks = db.scalars(
+    result = await db.scalars(
         select(Chunk)
         .where(Chunk.document_id == document_id)
         .order_by(Chunk.chunk_index)
-    ).all()
-    return list(chunks)
+    )
+    return list(result.all())

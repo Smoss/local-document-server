@@ -2,6 +2,7 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from sqlalchemy import select
 
 from doc_server.models import Chunk
 
@@ -9,7 +10,7 @@ from doc_server.models import Chunk
 # @TestID 7aa136c8-f059-4597-aa94-40929940ae05
 # @SystemName Document API
 # @TestType Integration
-# @TestDescription Upload a doc, PUT new content, verify response has updated content and updated_at is set
+# @TestDescription PUT new content returns updated content and updated_at
 @pytest.mark.asyncio
 async def test_update_document_replaces_content(client):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
@@ -44,7 +45,7 @@ async def test_update_document_replaces_content(client):
 # @TestID 799d90e7-6cb9-41a4-ac76-828a5993b3ea
 # @SystemName Document API
 # @TestType Integration
-# @TestDescription Upload a doc, PUT new content, verify old chunks are gone and new chunks match new content
+# @TestDescription PUT new content replaces old chunks with new ones
 @pytest.mark.asyncio
 async def test_update_document_rechunks(client, db_session):
     with patch("doc_server.services.chunking.OllamaEmbedder") as MockEmbedder:
@@ -64,7 +65,10 @@ async def test_update_document_rechunks(client, db_session):
         doc_id = create_resp.json()["id"]
 
         # Get original chunks
-        old_chunks = db_session.query(Chunk).filter(Chunk.document_id == doc_id).all()
+        result = await db_session.scalars(
+            select(Chunk).where(Chunk.document_id == doc_id)
+        )
+        old_chunks = result.all()
         old_chunk_ids = {str(c.id) for c in old_chunks}
 
         # Update with different content
@@ -74,7 +78,10 @@ async def test_update_document_rechunks(client, db_session):
         )
 
     # Verify old chunks are gone and new ones exist
-    new_chunks = db_session.query(Chunk).filter(Chunk.document_id == doc_id).all()
+    result = await db_session.scalars(
+        select(Chunk).where(Chunk.document_id == doc_id)
+    )
+    new_chunks = result.all()
     new_chunk_ids = {str(c.id) for c in new_chunks}
     assert old_chunk_ids.isdisjoint(new_chunk_ids)
     assert len(new_chunks) > 0

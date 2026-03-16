@@ -2,13 +2,13 @@ from collections import OrderedDict
 from typing import Any
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from doc_server.models import Chunk, Document
 
 
-def search_chunks(
-    db: Session,
+async def search_chunks(
+    db: AsyncSession,
     query_embedding: list[float],
     threshold: float,
     max_results: int,
@@ -40,7 +40,8 @@ def search_chunks(
         .order_by(best_per_doc.c.best_distance, distance)
     )
 
-    results = db.execute(stmt).all()
+    result = await db.execute(stmt)
+    results = result.all()
 
     # Group by document, preserving order of best match
     grouped: OrderedDict[str, dict[str, Any]] = OrderedDict()

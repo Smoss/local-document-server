@@ -22,11 +22,10 @@ async def test_search_returns_ranked_results(client, db_session):
     doc = Document(
         filename="search.txt",
         content_type="text/plain",
-        file_path="/tmp/s.txt",
         status="embedded",
     )
     db_session.add(doc)
-    db_session.flush()
+    await db_session.flush()
 
     for i in range(3):
         chunk = Chunk(
@@ -35,7 +34,7 @@ async def test_search_returns_ranked_results(client, db_session):
             embedding=_make_vector(i),
         )
         db_session.add(chunk)
-    db_session.commit()
+    await db_session.commit()
 
     query_vector = _make_vector(1)  # Should be most similar to chunk 1
 
@@ -81,22 +80,21 @@ async def test_search_empty_results(client, db_session):
 # @TestID e92f59f4-3183-446b-a1e6-0a85916512fa
 # @SystemName Document API
 # @TestType Integration
-# @TestDescription Search results include document metadata (filename, content_type, created_at)
+# @TestDescription Search results include document metadata
 @pytest.mark.asyncio
 async def test_search_includes_metadata(client, db_session):
     doc = Document(
         filename="meta.txt",
         content_type="text/plain",
-        file_path="/tmp/m.txt",
         status="embedded",
     )
     db_session.add(doc)
-    db_session.flush()
+    await db_session.flush()
 
     vec = _make_vector(99)
     chunk = Chunk(document_id=doc.id, chunk_index=0, embedding=vec)
     db_session.add(chunk)
-    db_session.commit()
+    await db_session.commit()
 
     with patch("doc_server.routers.search.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()
@@ -118,23 +116,22 @@ async def test_search_includes_metadata(client, db_session):
 # @TestID ac2909ff-6ba6-43fa-b6e6-8a47da706ea7
 # @SystemName Document API
 # @TestType Integration
-# @TestDescription Multiple chunks from same document are grouped under one search result
+# @TestDescription Same-document chunks are grouped under one result
 @pytest.mark.asyncio
 async def test_search_grouped_by_document(client, db_session):
     doc = Document(
         filename="grouped.txt",
         content_type="text/plain",
-        file_path="/tmp/g.txt",
         status="embedded",
     )
     db_session.add(doc)
-    db_session.flush()
+    await db_session.flush()
 
     vec = _make_vector(50)
     for i in range(3):
         chunk = Chunk(document_id=doc.id, chunk_index=i, embedding=vec)
         db_session.add(chunk)
-    db_session.commit()
+    await db_session.commit()
 
     with patch("doc_server.routers.search.OllamaEmbedder") as MockEmbedder:
         instance = AsyncMock()

@@ -26,7 +26,6 @@ def upgrade() -> None:
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('filename', sa.String(), nullable=False),
     sa.Column('content_type', sa.String(), nullable=False),
-    sa.Column('file_path', sa.String(), nullable=True),
     sa.Column('content', sa.Text(), nullable=True),
     sa.Column('status', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),

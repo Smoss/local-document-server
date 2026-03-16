@@ -84,6 +84,6 @@ async def test_upload_persists_metadata(client, db_session):
 
     from doc_server.models import Document
 
-    doc = db_session.get(Document, data["id"])
+    doc = await db_session.get(Document, data["id"])
     assert doc is not None
     assert doc.filename == "meta.txt"

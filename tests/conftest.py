@@ -1,5 +1,5 @@
 import os
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from pathlib import Path
 from unittest.mock import AsyncMock
 
@@ -7,8 +7,8 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy import create_engine, text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 # Override settings before importing app modules
 os.environ["DATABASE_URL"] = (
@@ -32,6 +32,11 @@ def _alembic_config() -> Config:
 @pytest.fixture(scope="session")
 def db_engine():
     engine = create_engine(TEST_DB_URL)
+    # Drop existing tables and alembic version to ensure clean slate
+    Base.metadata.drop_all(bind=engine)
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+        conn.commit()
     command.upgrade(_alembic_config(), "head")
     yield engine
     Base.metadata.drop_all(bind=engine)
@@ -39,23 +44,24 @@ def db_engine():
 
 
 @pytest.fixture
-def db_session(db_engine) -> Generator[Session, None, None]:
-    connection = db_engine.connect()
-    transaction = connection.begin()
-    session = sessionmaker(bind=connection)()
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
+async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
+    async_engine = create_async_engine(TEST_DB_URL)
+    async with async_engine.connect() as conn:
+        trans = await conn.begin()
+        session = AsyncSession(bind=conn, expire_on_commit=False)
+        yield session
+        await session.close()
+        await trans.rollback()
+    await async_engine.dispose()
 
 
 @pytest.fixture
-async def client(db_session) -> AsyncClient:
+async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
     from doc_server.config import settings
 
     settings.database_url = TEST_DB_URL
 
-    def override_get_db():
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
