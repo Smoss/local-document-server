@@ -94,9 +94,7 @@ async def test_search_includes_metadata(client, db_session):
     db_session.flush()
 
     vec = _make_vector(99)
-    chunk = Chunk(
-        document_id=doc.id, chunk_index=0, embedding=vec
-    )
+    chunk = Chunk(document_id=doc.id, chunk_index=0, embedding=vec)
     db_session.add(chunk)
     db_session.commit()
 
@@ -134,9 +132,7 @@ async def test_search_grouped_by_document(client, db_session):
 
     vec = _make_vector(50)
     for i in range(3):
-        chunk = Chunk(
-            document_id=doc.id, chunk_index=i, embedding=vec
-        )
+        chunk = Chunk(document_id=doc.id, chunk_index=i, embedding=vec)
         db_session.add(chunk)
     db_session.commit()
 

@@ -63,12 +63,8 @@ def test_cosine_similarity_query(db_session):
 
     vec_a = _make_vector(10)
     vec_b = _make_vector(20)
-    chunk_a = Chunk(
-        document_id=doc.id, chunk_index=0, embedding=vec_a
-    )
-    chunk_b = Chunk(
-        document_id=doc.id, chunk_index=1, embedding=vec_b
-    )
+    chunk_a = Chunk(document_id=doc.id, chunk_index=0, embedding=vec_a)
+    chunk_b = Chunk(document_id=doc.id, chunk_index=1, embedding=vec_b)
     db_session.add_all([chunk_a, chunk_b])
     db_session.flush()
 
@@ -102,9 +98,7 @@ def test_null_embedding_excluded(db_session):
         chunk_index=0,
         embedding=_make_vector(5),
     )
-    chunk_without = Chunk(
-        document_id=doc.id, chunk_index=1, embedding=None
-    )
+    chunk_without = Chunk(document_id=doc.id, chunk_index=1, embedding=None)
     db_session.add_all([chunk_with, chunk_without])
     db_session.flush()
 

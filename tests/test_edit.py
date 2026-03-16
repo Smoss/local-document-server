@@ -64,9 +64,7 @@ async def test_update_document_rechunks(client, db_session):
         doc_id = create_resp.json()["id"]
 
         # Get original chunks
-        old_chunks = (
-            db_session.query(Chunk).filter(Chunk.document_id == doc_id).all()
-        )
+        old_chunks = db_session.query(Chunk).filter(Chunk.document_id == doc_id).all()
         old_chunk_ids = {str(c.id) for c in old_chunks}
 
         # Update with different content
@@ -76,9 +74,7 @@ async def test_update_document_rechunks(client, db_session):
         )
 
     # Verify old chunks are gone and new ones exist
-    new_chunks = (
-        db_session.query(Chunk).filter(Chunk.document_id == doc_id).all()
-    )
+    new_chunks = db_session.query(Chunk).filter(Chunk.document_id == doc_id).all()
     new_chunk_ids = {str(c.id) for c in new_chunks}
     assert old_chunk_ids.isdisjoint(new_chunk_ids)
     assert len(new_chunks) > 0
