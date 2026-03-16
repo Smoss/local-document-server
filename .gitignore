@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.env
+storage/
+*.egg-info/
+dist/
+.venv/
+node_modules/
+mcp-server/dist/
+.context/
+.serena/

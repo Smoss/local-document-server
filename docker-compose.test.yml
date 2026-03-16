@@ -1,0 +1,14 @@
+services:
+  test-db:
+    image: pgvector/pgvector:0.8.0-pg16
+    environment:
+      POSTGRES_USER: docserver
+      POSTGRES_PASSWORD: docserver
+      POSTGRES_DB: docserver_test
+    ports:
+      - "7730:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docserver"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

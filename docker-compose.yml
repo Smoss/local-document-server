@@ -1,0 +1,19 @@
+services:
+  db:
+    image: pgvector/pgvector:0.8.0-pg16
+    environment:
+      POSTGRES_USER: docserver
+      POSTGRES_PASSWORD: docserver
+      POSTGRES_DB: docserver
+    ports:
+      - "5438:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docserver"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
