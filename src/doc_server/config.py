@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = 50
     search_similarity_threshold: float = 0.3
     search_max_results: int = 20
+    log_level: str = "INFO"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

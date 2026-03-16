@@ -1,9 +1,12 @@
+import logging
 from collections import OrderedDict
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from doc_server.stores import chunk_store
+
+logger = logging.getLogger(__name__)
 
 
 async def search_documents(
@@ -12,9 +15,13 @@ async def search_documents(
     threshold: float,
     max_results: int,
 ) -> list[dict[str, Any]]:
+    logger.info(
+        "Searching chunks (threshold=%.2f, max_results=%d)", threshold, max_results
+    )
     results = await chunk_store.search_similar_chunks(
         db, query_embedding, threshold, max_results
     )
+    logger.info("Found %d matching chunk(s)", len(results))
 
     grouped: OrderedDict[str, dict[str, Any]] = OrderedDict()
     for chunk, document, dist in results:
@@ -38,4 +45,5 @@ async def search_documents(
             }
         )
 
+    logger.info("Grouped results into %d document(s)", len(grouped))
     return list(grouped.values())

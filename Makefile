@@ -39,7 +39,7 @@ migrate-new:                   ## Generate a new migration (usage: make migrate-
 
 # ── Run ──────────────────────────────────────────────────────────────────
 serve: db                      ## Start the FastAPI server (auto-starts db)
-	uv run uvicorn doc_server.main:app --reload --host 0.0.0.0 --port 7571
+	uv run uvicorn doc_server.main:app --reload --host 0.0.0.0 --port 7571 --log-level info
 
 # ── MCP Server ───────────────────────────────────────────────────────────
 mcp-build:                     ## Build the MCP server
