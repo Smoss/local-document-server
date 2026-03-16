@@ -2,7 +2,9 @@ import io
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from sqlalchemy import select
 
+from doc_server.models import Chunk
 from doc_server.services.chunking import split_into_chunks
 
 
@@ -52,10 +54,6 @@ async def test_upload_triggers_chunking(client, db_session):
         )
     assert response.status_code == 201
     doc_id = response.json()["id"]
-
-    from sqlalchemy import select
-
-    from doc_server.models import Chunk
 
     result = await db_session.scalars(
         select(Chunk).where(Chunk.document_id == doc_id).order_by(Chunk.chunk_index)

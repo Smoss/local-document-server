@@ -3,6 +3,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from doc_server.models import Document
+
 
 # @TestID 2897fd56-c0ae-4513-8315-66a2e0f8e105
 # @SystemName Document API
@@ -81,8 +83,6 @@ async def test_upload_persists_metadata(client, db_session):
             files={"file": ("meta.txt", io.BytesIO(b"metadata test"), "text/plain")},
         )
     data = response.json()
-
-    from doc_server.models import Document
 
     doc = await db_session.get(Document, data["id"])
     assert doc is not None

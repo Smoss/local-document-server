@@ -1,4 +1,5 @@
 import io
+import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -32,8 +33,6 @@ async def test_get_document_file(client):
 # @TestDescription GET /documents/{id}/file for nonexistent document returns 404
 @pytest.mark.asyncio
 async def test_get_nonexistent_document(client):
-    import uuid
-
     response = await client.get(f"/api/documents/{uuid.uuid4()}/file")
     assert response.status_code == 404
 

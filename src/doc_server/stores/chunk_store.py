@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy import delete, select
+from sqlalchemy import func as sa_func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from doc_server.models import Chunk, Document
@@ -34,8 +35,6 @@ async def search_similar_chunks(
     threshold: float,
     max_results: int,
 ) -> list[tuple[Chunk, Document, float]]:
-    from sqlalchemy import func as sa_func
-
     distance_expr = Chunk.embedding.cosine_distance(query_embedding)
     distance = distance_expr.label("distance")
 

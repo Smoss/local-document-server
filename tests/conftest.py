@@ -1,4 +1,5 @@
 import os
+import random
 from collections.abc import AsyncGenerator
 from pathlib import Path
 from unittest.mock import AsyncMock
@@ -15,6 +16,7 @@ os.environ["DATABASE_URL"] = (
     "postgresql+psycopg://docserver:docserver@localhost:7730/docserver_test"
 )
 
+from doc_server.config import settings
 from doc_server.database import get_db
 from doc_server.main import app
 from doc_server.models import Base
@@ -57,8 +59,6 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.fixture
 async def client(db_session) -> AsyncGenerator[AsyncClient, None]:
-    from doc_server.config import settings
-
     settings.database_url = TEST_DB_URL
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -81,8 +81,6 @@ def mock_embedder():
     def make_vector(text: str) -> list[float]:
         """Deterministic vector based on text hash."""
         h = hash(text) % (2**32)
-        import random
-
         rng = random.Random(h)
         return [rng.random() for _ in range(768)]
 
